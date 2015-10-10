@@ -1,0 +1,25 @@
+#!/bin/sh
+
+remove()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if test $# -eq 0
+	then
+		echo "You haven't given a company to remove"
+	else
+		while test $# -gt 0
+		do
+			toRemove=`cat $scriptDirectory/config/companiesList.conf|grep "$1" |cut -d'|' -f2`
+			grep -w -q $toRemove $scriptDirectory/config/watchList.conf
+			if test $? -eq 0
+			then
+				sed -i '/^'`echo $toRemove`'$/d' $scriptDirectory/config/watchList.conf
+				echo "$1 has been successfully removed from the list" 
+			else
+				echo "$1 :this company is not monitored"
+			fi
+			shift
+		done
+	fi
+}

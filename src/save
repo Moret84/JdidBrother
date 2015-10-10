@@ -1,0 +1,52 @@
+#!/bin/sh
+
+save()
+{
+	temp=`mktemp`
+	dateArchive=`date "+%d%m%Y_%H%M%S"`
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+
+	if [ "$(ls -A $scriptDirectory/data)" ]
+	then
+		if [ -s $scriptDirectory/config/settings.conf ]
+		then
+			saveDirectory=`cat $scriptDirectory/config/settings.conf|grep "saveDirectory" | cut -d'|' -f2`
+			nbPlotsToKeep=`cat $scriptDirectory/config/settings.conf|grep "nbPlotsToKeep" | cut -d'|' -f2`
+		else
+			saveDirectory=$scriptDirectory/"saves"
+			nbPlotsToKeep=10
+			echo -e "You haven't configure the system yet. By the way, default settings are used.
+			default save path is $saveDirectory,
+			default alert recipient mail address is $nbPlotsToKeep.
+			To configure the system, use JdidBrother configure"
+		fi
+
+		if [ ! -f $saveDirectory/.comparison ]
+		then
+			for directory in $scriptDirectory/data/*
+			do
+				find $directory -name "*.png"|sort -r|head -n$nbPlotsToKeep|cut -d'/' -f6,7,8 >> $temp
+			done
+			touch $saveDirectory/.comparison
+		else
+			for directory in $scriptDirectory/data/*
+			do
+				find $directory -newer "$saveDirectory/.comparison" -name "*.png"|sort -r|head -n$nbPlotsToKeep|cut -d'/' -f6,7,8 >> $temp
+			done
+			rm $saveDirectory/.comparison
+			touch $saveDirectory/.comparison
+		fi
+	else
+		echo "Nothing to save."
+	fi
+
+	if [ -s $temp ]
+	then
+		tar -cf "$saveDirectory/Save_$dateArchive".tar -C "$scriptDirectory" `cat $temp` 
+		echo "Graphs saved."
+	fi
+
+	rm $temp
+
+}

@@ -1,0 +1,93 @@
+#!/bin/sh
+
+scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+. $scriptDirectory/src/add
+. $scriptDirectory/src/configure
+. $scriptDirectory/src/start
+. $scriptDirectory/src/stop
+. $scriptDirectory/src/remove
+. $scriptDirectory/src/pull
+. $scriptDirectory/src/draw
+. $scriptDirectory/src/save
+. $scriptDirectory/src/current
+
+
+if test $# -eq 0
+then
+	echo -e "Welcome to JdidBrother !\nNo parameter. What would you do?\nPlease type one of the following command as a parameter of JdidBrother\n"
+	echo -e "       start:begin automatic watching\n       configure:run automatic watching configure script\n       stop:stop automatic watching\n       list:print the watching availables companies list\n       current:print the current watched companies list\n       add [companies list]:add companies to the watching list\n       remove [companies list]:remove companies from the watching list\n       help:display help file\n       pull:retry fresh prices for each company you are watching for\n       draw:draw plot using current datas\n       save:save graphics "| column -t -s ':'
+	echo ""
+	echo "If you are an advanced user, you can modify your settings by editing the config/settings.conf . But be sure to keep the file format."
+	echo ""
+elif test $1 = "start"
+then
+	if ! test -s "$scriptDirectory/config/watchList.conf"
+	then
+		echo "No company to watch. Please add some company."
+	elif ! test -s "$scriptDirectory/config/settings.conf"
+	then
+		configure
+	fi
+	start
+elif test $1 = "stop"
+then
+	stop
+elif test $1 = "configure"
+then
+	configure
+
+elif test $1 = "list"
+then
+	cat $scriptDirectory/config/companiesList.conf|cut -d"|" -f1
+
+elif test $1 = "current"
+then
+	if test -s $scriptDirectory/config/watchList.conf
+	then
+		current
+	else
+		echo "No watching list at the moment"
+	fi
+
+elif test $1 = "add"
+then
+	if test $# -gt 1
+	then
+		shift
+		while test $# -gt 0
+		do
+			add "$1"
+			shift
+		done
+	else
+		add
+	fi
+
+elif test $1 = "remove"
+then
+	if test $# -gt 1
+	then shift
+		while test $# -gt 0
+		do
+			remove "$1"
+			shift
+		done
+	else
+		remove
+	fi
+elif test $1 = "help"
+then
+	cat $scriptDirectory/config/help.conf
+elif test $1 = "pull"
+then
+		pull
+elif test $1 = "draw"
+then
+	draw
+elif test $1 = "save"
+then
+		save
+else
+	echo "Bien de rentrer n'importe quoi ? (oui je gueule en français, j'y arrive mieux)"
+fi

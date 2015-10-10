@@ -1,0 +1,43 @@
+#!/bin/sh
+
+add()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if test $# -eq 0
+	then
+		echo "You haven't given a company to add."
+	else
+		while test $# -gt 0
+		do
+			grep -w -q "$1" $scriptDirectory/config/companiesList.conf
+			if test $? -eq 0
+			then
+				#while read line
+				#do
+				#	echo $line|grep -q -w "$1"
+				#	if test $? -eq 0
+				#	then
+				#		toAdd=`echo "$line"|grep -w "$1"|cut -d'|' -f2`
+				#	fi
+				#done < $scriptDirectory"/config/companiesList.conf"
+				toAdd=`cat $scriptDirectory/config/companiesList.conf|grep "$1" |cut -d'|' -f2`
+				if [ ! -f $scriptDirectory/config/watchList.conf ]
+				then
+					touch $scriptDirectory/config/watchList.conf
+				fi
+				grep -w -q "$toAdd" $scriptDirectory/config/watchList.conf
+				if test $? -eq 0
+				then
+					echo "$1 : already in the list."
+				else
+					echo $toAdd >> $scriptDirectory/config/watchList.conf
+					echo "$1 added to the list."
+				fi
+			else
+				echo "$1 : no company with this name . Don't forget to escape the spaces using \\ !"
+			fi
+			shift
+		done
+	fi
+}

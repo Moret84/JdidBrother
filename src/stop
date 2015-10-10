@@ -1,0 +1,33 @@
+#!/bin/sh
+
+stop()
+{
+	oldCrontab=`mktemp`
+	newCrontab=`mktemp`
+
+	crontab -l > $oldCrontab 2> /dev/null
+
+	grep -w -q "pull\|draw\|save" $oldCrontab
+
+	if [ $? -eq 1 ]
+	then 
+		echo "JdidBrother is not running"
+	else
+		while read line
+		do
+
+			echo "$line"|grep -v "pull\|draw\|save" >> $newCrontab
+		done < $oldCrontab
+
+		if [ -s $newCrontab ]
+		then
+			crontab $newCrontab
+		else
+			crontab -r
+		fi
+
+		echo "JdidBrother stops"
+	fi
+	rm $oldCrontab
+	rm $newCrontab
+}

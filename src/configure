@@ -1,0 +1,43 @@
+#!/bin/sh
+
+configure()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if test -f $scriptDirectory/config/settings.conf
+	then
+		rm $scriptDirectory/config/settings.conf
+	fi
+
+	echo "Welcome into the configuration script of JdidBrother, the monitoring \"Bourse de Paris\" script"
+
+	echo -e "\nYou will have to provide time intervals to define the frequency of automatics pull requests, plots drawing, and plots saving."
+	echo "Remember that, intervals must be given using crontab format (minutes hours dayOfMonth month dayOfWeek)."
+    echo "Be careful to give them using right format. More informations -> man crontab."
+	echo "If wrong formatted informations are set, we can't guarantee the right functioning of the script"
+
+	echo "First, please give the data pull interval."
+	read pullInterval
+	echo "Thanks. Now, the plot drawing interval"
+	read drawInterval
+	echo "OK. JdidBrother include an alarm module which sent you notifications when some share price fall for more than a step. Please give this step (percent)."
+	read maxPriceDrop
+	echo "OK. Now you can give the email adress to which notifications will be sent"
+	read mailAddress
+	echo "Thanks. be courageous, that's almost done. Plots are saved using an interval, give it "
+	read saveInterval
+	echo "Give the directory (absolute path) where they will be saved "
+	read saveDirectory
+	echo "Great. Last, but not least, you must define the x number, which represents the last x plots to save"
+	read nbPlotsToKeep
+
+	echo "pullInterval|$pullInterval" >> $scriptDirectory/config/settings.conf
+	echo "drawInterval|$drawInterval" >> $scriptDirectory/config/settings.conf
+	echo "maxPriceDrop|$maxPriceDrop" >> $scriptDirectory/config/settings.conf
+	echo "mailAddress|$mailAddress" >> $scriptDirectory/config/settings.conf
+	echo "saveInterval|$saveInterval" >> $scriptDirectory/config/settings.conf
+	echo "saveDirectory|$saveDirectory" >> $scriptDirectory/config/settings.conf
+	echo "nbPlotsToKeep|$nbPlotsToKeep" >> $scriptDirectory/config/settings.conf
+
+	echo "Finish ! Now JdidBrother is ready to work"
+}

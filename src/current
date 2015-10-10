@@ -1,0 +1,11 @@
+#!/bin/sh
+
+current()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	while read line
+	do
+		grep -w "$line" $scriptDirectory"/config/companiesList.conf"|cut -d'|' -f1
+	done < $scriptDirectory"/config/watchList.conf"
+}

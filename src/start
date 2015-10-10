@@ -1,0 +1,57 @@
+#!/bin/sh
+
+start()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if [ -s $scriptDirectory/config/watchList.conf ]
+	then
+		oldCrontab=`mktemp`
+		newCrontab=`mktemp`
+		crontab -l > $oldCrontab 2> /dev/null
+
+		if [ -s $oldCrontab ]
+		then
+			grep -w -q "pull\|draw\|save" $oldCrontab
+			if [ $? -eq 0 ]
+			then 
+				echo "JdidBrother is currently running"
+				exit
+			else
+				while read line
+				do
+					echo "$line" >> $newCrontab
+				done < $oldCrontab
+			fi
+		fi
+
+		pullInterval=`cat $scriptDirectory/config/settings.conf|grep "pullInterval" | cut -d"|" -f2`
+		priceDrop=`cat $scriptDirectory/config/settings.conf|grep "priceDrop"|cut -d"|" -f2`
+		mailAddress=`cat $scriptDirectory/config/settings.conf|grep "mailAddress"|cut -d"|" -f2`
+		echo "$pullInterval $scriptDirectory/`basename $0` pull" >> $newCrontab
+
+		drawInterval=`cat $scriptDirectory/config/settings.conf|grep "drawInterval"|cut -d"|" -f2`
+		echo "$drawInterval $scriptDirectory/`basename $0` draw" >> $newCrontab
+
+		saveInterval=`cat $scriptDirectory/config/settings.conf|grep "saveInterval"|cut -d"|" -f2`
+		saveDirectory=`cat $scriptDirectory/config/settings.conf|grep "saveDirectory"|cut -d"|" -f2`
+		nbPlotsToKeep=`cat $scriptDirectory/config/settings.conf|grep "nbPlotsToKeep"|cut -d"|" -f2`
+		echo "$saveInterval $scriptDirectory/`basename $0` save" >> $newCrontab
+
+		crontab $newCrontab 2> /dev/null
+
+		if [ $? -ne 0 ]
+		then
+			echo "JdidBrother can't start. You may have made a mistake when typing intervals during configure script."
+			echo "Please run configure script again"
+		else
+			echo "JdidBrother launched"
+		fi
+
+		rm "$oldCrontab"
+		rm "$newCrontab"
+
+	else
+		echo "No companies to follow . To add companies, use the add command."
+	fi
+}

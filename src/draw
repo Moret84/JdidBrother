@@ -1,0 +1,33 @@
+#!/bin/sh
+
+draw()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if [ "$(ls -A $scriptDirectory/data)" ]
+	then
+		for directory in $scriptDirectory/data/*
+		do
+			for data in $directory/*.dat
+			do
+				temp=`mktemp`
+				shareName=`basename $directory | sed 's/_/ /'`
+				echo set terminal png size 1200,800 >> $temp
+				echo set xdata time >> $temp
+				echo set timefmt \""%d/%m/%Y-%H:%M:%S"\" >> $temp
+				echo set xlabel \""time"\" >> $temp
+				echo set ylabel \""Price (euros)"\" >> $temp
+				echo set title \"" $shareName share price"\" >> $temp
+				echo set output \""`dirname $data`/`date "+%d%m%Y_%H%M%S"`.png"\" >> $temp
+				echo plot \""$data"\" using 1:2 with linespoint title \'Price\'>> $temp
+				gnuplot "$temp" 2> /dev/null
+				rm $temp
+			done
+			echo "$shareName draw done."
+		done
+		echo "Draws done."
+	else
+		echo "Nothing to draw."
+	fi
+}
+	

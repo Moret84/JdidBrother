@@ -1,0 +1,55 @@
+#!/bin/sh
+
+pull()
+{
+	scriptDirectory="$(cd "$(dirname "$0")" && pwd)"
+
+	if [ -f $scriptDirectory"/config/watchList.conf" ]
+	then
+
+		if [ -f $scriptDirectory/config/settings.conf ] 
+		then
+			maxPriceDrop=`cat $scriptDirectory/config/settings.conf|grep "maxPriceDrop"|cut -d'|' -f2`
+			recipientMail=`cat $scriptDirectory/config/settings.conf|grep "mailAddress"|cut -d'|' -f2`
+		else
+			maxPriceDrop=100
+			recipientMail="ladmindusystemequiroxe@ceri.com"
+			echo "You haven't configure the system yet. By the way, default settings are used."
+			echo "default max price drop is $maxPriceDrop,"
+			echo "default alert recipient mail address is $recipientMail ."
+			echo "To configure the system, use JdidBrother configure."
+		fi
+
+		while read line
+		do
+			directoryName=`cat $scriptDirectory/config/companiesList.conf|grep -w "$line"|cut -d'|' -f1|sed 's/ /_/g'`
+			if ! test -d $scriptDirectory"/data/$directoryName"
+			then
+				mkdir $scriptDirectory"/data/$directoryName"
+			fi
+
+			temp=`mktemp`
+			wget -q "http://www.google.com/finance?q=EPA:"$line -O $temp
+			newValue=`cat $temp | grep -A1 "<meta itemprop=\"price\""| tail -n1|sed "s/content=\"\|\" \/>\| *//g"`
+			rm $temp
+
+			if test -f $scriptDirectory"/data/$directoryName/"prices.dat
+			then
+				oldValue=`cat $scriptDirectory"/data/$directoryName/"prices.dat|tail -n1|cut -d" " -f2`
+				priceDrop=` echo "(($newValue - $oldValue) / $oldValue) * 100"|bc`
+
+				if test $priceDrop -gt $maxPriceDrop
+				then
+					echo "Hello, you receive this mail because the price of the $directoryName action dropped for more than $maxPriceDrop %, which is the value you had defined."| mail -s "Important price drop" $recipientMail
+				fi
+			fi
+
+			echo `date "+%d/%m/%Y-%H:%M:%S"`	$newValue >> $scriptDirectory"/data/$directoryName/"prices.dat
+			currentRetry=`cat $scriptDirectory/config/companiesList.conf|grep -w "$line"|cut -d'|' -f1`
+			echo "	$currentRetry datas retrieved."
+		done < $scriptDirectory"/config/watchList.conf"
+		echo "New datas were successfully retrieved."
+	else
+		echo "No company to watch. Please add some company."
+	fi
+}
